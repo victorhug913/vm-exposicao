@@ -1,0 +1,146 @@
+---
+title: "Pneumonia associada à ventilação mecânica - Análise de fatores de risco"
+output: github_document
+---
+
+Obs: Como, por padrão, são registradas as infecções hospitalares no banco de dados, os pacientes que não tenham registros de PAV foram considerados negativos para tal evolução.
+
+Quanto à ordem das colunas, testei outras bibliotecas para calcular o odds e aparentemnete o problema está na biblioteca mesmo, ela considera as colunas em ordem inversa.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+setwd('C:/github/vm-exposicao');
+require(rmarkdown);
+require(epitools);
+base <- read.csv('base.csv', stringsAsFactors = T)
+df <- base[base$VM == "Sim", ];
+
+df$PAV <- "1) Não PAV";
+df$PAV[df$Tipo.Infecção.Hospitalar=="Pneumonia associada a VM"] <- "2) PAV";
+
+df$PavReg[df$PAV=="2) PAV"] <- 1
+df$PavReg[df$PAV=="1) Não PAV"] <- 0
+```
+
+# Estatística descritiva
+```{r descritiva, echo=FALSE}
+summary(as.factor(df$PAV));
+```
+
+```{r funcoes, include=FALSE}
+QuiQuadradoCompleto = function (i,d) {
+  Tabela <- table(d,i);
+  risco <- oddsratio(Tabela, method = "wald");
+  print(risco)
+#  variavel <- as.factor(d)
+#   mylogit2 <- glm(PavReg ~ as.factor(d), data = df,
+#                family = binomial(link="logit"))
+#   exp(cbind(OR = coef(mylogit2), confint(mylogit2)))
+}
+```
+
+# Análise quanto ao sexo
+```{r sexo, echo=FALSE}
+QuiQuadradoCompleto(df$PAV,df$Sexo);
+```
+# Análise quanto ao tempo de VM
+Observação: Revisei os dias de VM e realmente não tem dados missing aqui, todos os pacientes com VM positivo, tem valores em dias de VM, apesar de alguns extremamente baixos (do tipo 0,01) e dois pacientes com valor igual a 0. Creio que o software do hospital calcule esse tempo automaticamente a partir do momento de entrada e de saída do paciente e por isso aconteceu isso.
+Não pode ser considerado 2 dias de VM aqui, porque nenhuma pneumonia é considerada Pneumonia associada à ventilação mecânica se o paciente tiver menos de 2 dias de VM, portanto a incidência nesse grupo é igual a 0 e o ODDS dá infinito com ele travado.
+```{r tempoVM, echo=FALSE}
+df$Dias.VM2 <- as.numeric(sub(",", ".", df$Dias.VM))
+df$Tempo.VM[df$Dias.VM2<5] <- "1) Até 5 dias";
+df$Tempo.VM[df$Dias.VM2>=5] <- "2) 5 a 10 dias";
+df$Tempo.VM[df$Dias.VM2>=10] <- "3) 10 a 14 dias";
+df$Tempo.VM[df$Dias.VM2>=14] <- "4) 14 dias ou mais";
+QuiQuadradoCompleto(df$PAV,df$Tempo.VM);
+```
+# Idosos e não idosos.
+Considera-se idosos pessoas com 60 anos ou mais.
+```{r idade, echo=FALSE}
+df$Idade <- as.numeric(df$Idade);
+dfidoso <- df[!is.na(df$Idade),]
+dfidoso$Idoso[dfidoso$Idade<60] <- "1) Não Idoso";
+dfidoso$Idoso[dfidoso$Idade>=60] <- "2) Idoso";
+QuiQuadradoCompleto(dfidoso$PAV,dfidoso$Idoso);
+```
+
+# Internação por Covid-19
+As UTIs 3 e 4 foram abertas e receberam exclusivamente pacientes de Covid-19, portanto, considerou-se tais pacientes como internados por Covid-19. Nenhuma outra UTI recebeu pacientes que fossem sabidamente diagnosticados para a doença.
+```{r covid19, echo=FALSE}
+dfcovid <- df[!is.na(df$UTI),]
+dfcovid$Covid19 <- "1) Não Covid-19";
+dfcovid$Covid19[df$UTI=="HMSJ3"] <- "2) Covid-19";
+dfcovid$Covid19[df$UTI=="HMSJ4"] <- "2) Covid-19";
+QuiQuadradoCompleto(dfcovid$PAV,dfcovid$Covid19);
+```
+
+# Diabetes mellitus insulino dependente
+```{r dmid, echo=FALSE}
+QuiQuadradoCompleto(df$PAV,df$DMID);
+```
+# Diabetes mellitus não insulino dependente
+```{r dmnid, echo=FALSE}
+QuiQuadradoCompleto(df$PAV,df$DMNID);
+```
+# Doença Pulmonar Obstrutiva Crônica
+```{r dpoc, echo=FALSE}
+QuiQuadradoCompleto(df$PAV,df$DPOC.Não.Terminal);
+```
+# Etilismo
+```{r etilismo, echo=FALSE}
+QuiQuadradoCompleto(df$PAV,df$Etilismo);
+```
+# Fibrilação atrial crônica
+```{r 
+atrial, echo=FALSE}
+QuiQuadradoCompleto(df$PAV,df$
+                      .Atrial.Crônica);
+```
+# Hipertensao Arterial Sistêmica
+```{r hipertensaoarterial, echo=FALSE}
+QuiQuadradoCompleto(df$PAV,df$Hipertensão.Arterial.Sistêmica);
+```
+# Insuficiência cardíaca congestiva
+```{r icccf, echo=FALSE}
+QuiQuadradoCompleto(df$PAV,df$ICC.CF);
+```
+# IRC Não dialítica
+```{r irc, echo=FALSE}
+QuiQuadradoCompleto(df$PAV,df$IRC.Não.Dialítica);
+```
+# Obesidade
+```{r obesidade, echo=FALSE}
+QuiQuadradoCompleto(df$PAV,df$Obesidade);
+```
+# Tabagismo
+```{r tabagismo, echo=FALSE}
+QuiQuadradoCompleto(df$PAV,df$Tabagismo);
+```
+# Paciente com Câncer
+```{r cancer, echo=FALSE}
+QuiQuadradoCompleto(df$PAV,df$Paciente.Câncer);
+```
+# Paciente Crônico
+```{r pacientecronico, echo=FALSE}
+QuiQuadradoCompleto(df$PAV,df$Paciente.Crônico);
+```
+# Reinternação
+```{r reinternacao, echo=FALSE}
+QuiQuadradoCompleto(df$PAV,df$Reinternação);
+```
+# ODDs Ratio Ajustado
+```{r ajustedodds, echo=FALSE}
+require(mfx)
+require(readr)
+df$Tempo.VM2 <- as.factor(df$Tempo.VM)
+df$Idoso2 <- as.factor(dfidoso$Idoso)
+df$Covid192 <- as.factor(dfcovid$Covid19)
+df$DMNID2 <- as.factor(df$DMNID)
+df$DPOC.Não.Terminal2 <- as.factor(df$DPOC.Não.Terminal)
+df$IRC.Não.Dialítica2 <- as.factor(df$IRC.Não.Dialítica)
+
+mylogit2 <- glm(PavReg ~ Idoso2 + Covid192 + DMNID2 + DPOC.Não.Terminal2 + IRC.Não.Dialítica2, data = df, 
+               family = binomial(link="logit"))
+  exp(cbind(OR = coef(mylogit2), confint(mylogit2)))
+#stepwise(mylogit)
+```
