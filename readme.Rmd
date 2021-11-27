@@ -9,9 +9,10 @@ Quanto à ordem das colunas, testei outras bibliotecas para calcular o odds e ap
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-setwd('C:/github/vm-exposicao');
+setwd('C:/github/vm-exposicao/vm-exposicao');
 require(rmarkdown);
 require(epitools);
+require(ggplot2);
 base <- read.csv('base.csv', stringsAsFactors = T)
 df <- base[base$VM == "Sim", ];
 
@@ -25,6 +26,13 @@ df$PavReg[df$PAV=="1) Não PAV"] <- 0
 # Estatística descritiva
 ```{r descritiva, echo=FALSE}
 summary(as.factor(df$PAV));
+graf <- ggplot(df, aes(x="", y=PAV, fill=PAV))
+graf +  
+  geom_bar(stat="identity") +
+  scale_fill_brewer(palette="Dark2") +
+  labs(title = "Incidência de pneumonia associada à ventilação mecânica", x = "", y = "")+
+  theme_light()+
+  coord_polar("y", start=0)
 ```
 
 ```{r funcoes, include=FALSE}

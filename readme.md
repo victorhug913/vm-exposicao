@@ -14,6 +14,8 @@ as colunas em ordem inversa.
     ## 1) Não PAV     2) PAV 
     ##       1897         30
 
+![](readme_files/figure-gfm/descritiva-1.png)<!-- -->
+
 # Análise quanto ao sexo
 
     ## $data
